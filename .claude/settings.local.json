@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "Bash(npm run build:*)",
+      "Bash(bun build:*)",
+      "Bash(bun run typecheck:*)",
+      "Bash(bun test:*)",
+      "Bash(npx prisma:*)",
+      "Bash(bun add:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(bun run build)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

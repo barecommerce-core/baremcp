@@ -1,0 +1,24 @@
+# Source files (dist is included)
+src/
+tests/
+
+# Config files
+tsconfig.json
+.eslintrc.json
+.prettierrc
+.gitignore
+bun.lock
+
+# Development files
+*.test.ts
+*.spec.ts
+coverage/
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+
+# Example config (README has instructions)
+claude_desktop_config.example.json
