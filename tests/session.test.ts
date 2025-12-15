@@ -2,7 +2,7 @@
  * Tests for Session Tools
  *
  * Note: The connect tool uses OAuth Device Flow which requires browser interaction
- * and network calls. These tests focus on disconnect, status, and get_my_permissions.
+ * and network calls. These tests focus on disconnect, status, and diagnostics.
  */
 
 import { describe, it, expect, mock } from "bun:test";
@@ -144,14 +144,14 @@ describe("Session Tools", () => {
     });
   });
 
-  describe("get_my_permissions", () => {
-    it("should have get_my_permissions tool available", () => {
+  describe("diagnostics", () => {
+    it("should have diagnostics tool available", () => {
       const mockClient = createMockClient();
       const tools = createSessionTools(mockClient);
-      const permissionsTool = tools.find((t) => t.name === "get_my_permissions");
+      const diagnosticsTool = tools.find((t) => t.name === "diagnostics");
 
-      expect(permissionsTool).toBeDefined();
-      expect(permissionsTool!.description).toContain("permissions");
+      expect(diagnosticsTool).toBeDefined();
+      expect(diagnosticsTool!.description).toContain("diagnostic");
     });
   });
 });

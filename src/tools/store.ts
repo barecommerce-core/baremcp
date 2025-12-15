@@ -13,7 +13,6 @@ import {
   formatError,
   formatSuccess,
   StoreIdRequiredError,
-  storeApiPath,
 } from "../client/index.js";
 import type { Store, ListResponse, SingleResponse } from "../client/index.js";
 import type { ToolDefinition } from "./types.js";

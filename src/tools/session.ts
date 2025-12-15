@@ -7,13 +7,12 @@
  * - status: Check connection status
  */
 
-import { z } from "zod";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, unlinkSync } from "fs";
 import { homedir } from "os";
 import { join } from "path";
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "crypto";
 import type { HttpClient } from "../client/index.js";
-import { formatError, formatSuccess, NotAuthenticatedError } from "../client/index.js";
+import { formatError, formatSuccess } from "../client/index.js";
 import type { Store, Role } from "../client/index.js";
 import type { ToolDefinition } from "./types.js";
 

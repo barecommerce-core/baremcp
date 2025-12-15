@@ -116,43 +116,6 @@ describe("Resources", () => {
     });
   });
 
-  describe("store://stats", () => {
-    it("should return store analytics", async () => {
-      const mockClient = createMockClient({
-        get: mock(() =>
-          Promise.resolve({
-            period: "30d",
-            products: { total: 100, published: 80, draft: 15, archived: 5 },
-            orders: {
-              total: 50,
-              pending: 5,
-              paid: 20,
-              fulfilled: 20,
-              cancelled: 5,
-              revenue: "5000.00",
-            },
-            customers: { total: 200, newInPeriod: 25 },
-            topProducts: [
-              { id: "prod-1", title: "Best Seller", orderCount: 15, revenue: "750.00" },
-            ],
-          })
-        ),
-      });
-
-      const resources = createResources(mockClient);
-      const statsResource = resources.find((r) => r.uri === "store://stats")!;
-
-      const result = await statsResource.handler();
-      const data = JSON.parse(result);
-
-      expect(data.products.total).toBe(100);
-      expect(data.orders.total).toBe(50);
-      expect(data.orders.totalRevenue).toBe("5000.00");
-      expect(data.customers.total).toBe(200);
-      expect(data.topProducts).toHaveLength(1);
-    });
-  });
-
   describe("store://categories", () => {
     it("should return category tree", async () => {
       const mockClient = createMockClient({
@@ -211,9 +174,8 @@ describe("Resources", () => {
       const uris = resources.map((r) => r.uri);
       expect(uris).toContain("store://config");
       expect(uris).toContain("store://schema");
-      expect(uris).toContain("store://stats");
       expect(uris).toContain("store://categories");
-      expect(resources).toHaveLength(4);
+      expect(resources).toHaveLength(3);
     });
   });
 });

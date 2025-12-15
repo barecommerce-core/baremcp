@@ -92,9 +92,15 @@ jobs:
 
       - name: Verify no secrets in code
         run: |
-          # Check for common secret patterns
-          if grep -rE "(sk_test_|sk_live_|api[_-]?key\s*[:=]\s*['\"][^'\"]+)" --include="*.ts" --include="*.js" src/; then
-            echo "::error::Potential hardcoded secrets found in source code"
+          # Check for common secret patterns (exclude validation code in index.ts)
+          # Look for actual secret assignments, not validation patterns
+          if grep -rE "sk_(test|live)_[a-zA-Z0-9]{20,}" --include="*.ts" --include="*.js" src/; then
+            echo "::error::Potential hardcoded API keys found in source code"
+            exit 1
+          fi
+          # Check for hardcoded API key assignments (but not validation patterns)
+          if grep -rE "api[_-]?[Kk]ey\s*[:=]\s*['\"][a-zA-Z0-9_-]{20,}['\"]" --include="*.ts" --include="*.js" src/; then
+            echo "::error::Potential hardcoded API keys found in source code"
             exit 1
           fi
           echo "No hardcoded secrets detected"
