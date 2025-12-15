@@ -7,7 +7,7 @@ MCP server for [BareCommerceCore](https://github.com/AltEnding/barecommercecore)
 ### 1. Install
 
 ```bash
-bun add -g @barecommerce/mcp
+bun add -g @barecommercecore/mcp
 ```
 
 ### 2. Configure Claude Desktop

@@ -133,7 +133,7 @@
 **Tasks:**
 
 1. ✅ Update `package.json`:
-   - **DONE:** Changed name to `@barecommerce/mcp`
+   - **DONE:** Changed name to `@barecommercecore/mcp`
    - Added `publishConfig.access: "public"`
    - Added `PRIVACY.md` and `CHANGELOG.md` to files array
 
@@ -539,7 +539,7 @@ baremcp --version
 # Expected: 1.0.0
 
 # 7. Cleanup test install
-npm uninstall -g @barecommerce/mcp
+npm uninstall -g @barecommercecore/mcp
 ```
 
 **Verification:**
@@ -641,7 +641,7 @@ MCP server for BareCommerceCore e-commerce management via AI assistants.
 ### Install
 
 ```bash
-npm install -g @barecommerce/mcp
+npm install -g @barecommercecore/mcp
 ```
 
 ### Configure Claude Desktop
@@ -811,7 +811,7 @@ npm pack
 npm install -g ./barecommerce-mcp-1.0.0.tgz
 baremcp --version
 baremcp --help
-npm uninstall -g @barecommerce/mcp
+npm uninstall -g @barecommercecore/mcp
 
 # 3. Create release tag
 git add -A

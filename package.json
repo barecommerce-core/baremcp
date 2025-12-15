@@ -1,5 +1,5 @@
 {
-  "name": "@barecommerce/mcp",
+  "name": "@barecommercecore/mcp",
   "version": "1.0.0",
   "description": "MCP server for BareCommerceCore e-commerce platform management via AI assistants",
   "type": "module",
