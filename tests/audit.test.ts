@@ -182,4 +182,114 @@ describe("Audit Tools", () => {
       expect(data.code).toBe("INVALID_INPUT");
     });
   });
+
+  describe("recover_deleted_resource", () => {
+    const mockDeletedProductLog = {
+      ...mockAuditLog,
+      action: "delete",
+      resourceType: "product",
+    };
+
+    it("should recover a deleted product", async () => {
+      const mockGet = mock(() => Promise.resolve({ item: mockDeletedProductLog }));
+      const mockPost = mock(() =>
+        Promise.resolve({
+          message: "product recovered successfully",
+          resourceId: TEST_RESOURCE_ID,
+          resourceType: "product",
+        })
+      );
+
+      const mockClient = createMockClient({
+        get: mockGet as HttpClient["get"],
+        post: mockPost as HttpClient["post"],
+      });
+
+      const tools = createAuditTools(mockClient);
+      const recoverTool = tools.find((t) => t.name === "recover_deleted_resource")!;
+
+      const result = await recoverTool.handler({ logId: TEST_LOG_ID });
+
+      expect(result).not.toHaveProperty("isError");
+      expect(mockGet).toHaveBeenCalledWith(
+        `/stores/${DEFAULT_STORE_ID}/audit-logs/${TEST_LOG_ID}`
+      );
+      expect(mockPost).toHaveBeenCalledWith(
+        `/stores/${DEFAULT_STORE_ID}/audit-logs/${TEST_LOG_ID}/recover`,
+        {}
+      );
+
+      const data = JSON.parse(result.content[0]!.text);
+      expect(data.success).toBe(true);
+      expect(data.data.recovered).toBe(true);
+      expect(data.data.resourceType).toBe("product");
+    });
+
+    it("should reject recovery of non-delete actions", async () => {
+      const mockUpdateLog = { ...mockAuditLog, action: "update" };
+      const mockGet = mock(() => Promise.resolve({ item: mockUpdateLog }));
+
+      const mockClient = createMockClient({
+        get: mockGet as HttpClient["get"],
+      });
+
+      const tools = createAuditTools(mockClient);
+      const recoverTool = tools.find((t) => t.name === "recover_deleted_resource")!;
+
+      const result = await recoverTool.handler({ logId: TEST_LOG_ID });
+
+      expect(result).toHaveProperty("isError", true);
+      const data = JSON.parse(result.content[0]!.text);
+      expect(data.message).toContain("Only \"delete\" actions can be recovered");
+    });
+
+    it("should reject recovery of api_key resources", async () => {
+      const mockApiKeyLog = { ...mockDeletedProductLog, resourceType: "api_key" };
+      const mockGet = mock(() => Promise.resolve({ item: mockApiKeyLog }));
+
+      const mockClient = createMockClient({
+        get: mockGet as HttpClient["get"],
+      });
+
+      const tools = createAuditTools(mockClient);
+      const recoverTool = tools.find((t) => t.name === "recover_deleted_resource")!;
+
+      const result = await recoverTool.handler({ logId: TEST_LOG_ID });
+
+      expect(result).toHaveProperty("isError", true);
+      const data = JSON.parse(result.content[0]!.text);
+      expect(data.message).toContain("API keys cannot be recovered");
+    });
+
+    it("should reject recovery of media resources", async () => {
+      const mockMediaLog = { ...mockDeletedProductLog, resourceType: "media" };
+      const mockGet = mock(() => Promise.resolve({ item: mockMediaLog }));
+
+      const mockClient = createMockClient({
+        get: mockGet as HttpClient["get"],
+      });
+
+      const tools = createAuditTools(mockClient);
+      const recoverTool = tools.find((t) => t.name === "recover_deleted_resource")!;
+
+      const result = await recoverTool.handler({ logId: TEST_LOG_ID });
+
+      expect(result).toHaveProperty("isError", true);
+      const data = JSON.parse(result.content[0]!.text);
+      expect(data.message).toContain("Media files are permanently deleted");
+    });
+
+    it("should require logId", async () => {
+      const mockClient = createMockClient();
+
+      const tools = createAuditTools(mockClient);
+      const recoverTool = tools.find((t) => t.name === "recover_deleted_resource")!;
+
+      const result = await recoverTool.handler({});
+
+      expect(result).toHaveProperty("isError", true);
+      const data = JSON.parse(result.content[0]!.text);
+      expect(data.code).toBe("INVALID_INPUT");
+    });
+  });
 });

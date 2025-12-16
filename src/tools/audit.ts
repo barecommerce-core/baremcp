@@ -1,9 +1,10 @@
 /**
  * BareMCP — Audit Tools
  *
- * Tools for viewing audit logs:
+ * Tools for viewing and recovering from audit logs:
  * - list_audit_logs
  * - get_audit_log
+ * - recover_deleted_resource
  */
 
 import { z } from "zod";
@@ -55,6 +56,28 @@ const getAuditLogSchema = z.object({
   storeId: z.string().uuid().optional(),
   logId: z.string().uuid(),
 });
+
+const recoverResourceSchema = z.object({
+  storeId: z.string().uuid().optional(),
+  logId: z.string().uuid(),
+});
+
+/**
+ * Resource types that support recovery via audit logs.
+ *
+ * NOT recoverable:
+ * - api_key: Security risk - must create new key
+ * - media: Hard deleted with storage cleanup
+ * - store/merchant/payment_settings: Admin-only operations
+ */
+const RECOVERABLE_RESOURCES = [
+  "product",
+  "page",
+  "category",
+  "order",
+  "webhook",
+  "customer",
+] as const;
 
 // =============================================================================
 // Helper Functions
@@ -257,6 +280,93 @@ export function createAuditTools(client: HttpClient): ToolDefinition[] {
           );
 
           return formatSuccess(formatAuditLogFull(response.item));
+        } catch (error) {
+          return formatError(error);
+        }
+      },
+    },
+
+    // =========================================================================
+    // recover_deleted_resource
+    // =========================================================================
+    {
+      name: "recover_deleted_resource",
+      description: `Recover a deleted resource from an audit log snapshot.
+
+REQUIREMENTS:
+- Only available on Growth and Enterprise plans
+- Only works for "delete" action audit logs with snapshots
+- Must be within the plan's retention period (90 days for Growth, unlimited for Enterprise)
+
+RECOVERABLE RESOURCES:
+- product: Restored to "draft" status
+- page: Restored to "draft" status
+- category: Restored to "draft" status
+- order: Restored to previous status from snapshot
+- webhook: Recreated with a new secret
+- customer: Restored from snapshot data
+
+NOT RECOVERABLE:
+- api_key: Security risk - create a new key instead
+- media: Permanently deleted with storage cleanup`,
+      inputSchema: {
+        type: "object",
+        properties: {
+          storeId: {
+            type: "string",
+            description: "Store UUID. If not provided, uses the default store.",
+          },
+          logId: {
+            type: "string",
+            description: "The audit log UUID for the delete action to recover from",
+          },
+        },
+        required: ["logId"],
+      },
+      handler: async (args) => {
+        try {
+          const input = recoverResourceSchema.parse(args);
+          const storeId = resolveStoreId(input.storeId, client);
+
+          // First, get the audit log to validate it's recoverable
+          const auditResponse = await client.get<SingleResponse<AuditLog>>(
+            storeApiPath(storeId, `audit-logs/${input.logId}`)
+          );
+          const auditLog = auditResponse.item;
+
+          // Validate the audit log is for a delete action
+          if (auditLog.action !== "delete") {
+            return formatError(
+              new Error(`Cannot recover from "${auditLog.action}" action. Only "delete" actions can be recovered.`)
+            );
+          }
+
+          // Validate the resource type is recoverable
+          const resourceType = auditLog.resourceType as string;
+          if (!RECOVERABLE_RESOURCES.includes(resourceType as typeof RECOVERABLE_RESOURCES[number])) {
+            const notRecoverableReasons: Record<string, string> = {
+              api_key: "API keys cannot be recovered for security reasons. Please create a new API key instead.",
+              media: "Media files are permanently deleted along with their storage. Please upload the file again.",
+              store: "Store recovery is not supported via this tool.",
+              merchant: "Merchant recovery is not supported via this tool.",
+              payment_settings: "Payment settings recovery is not supported via this tool.",
+            };
+            const reason = notRecoverableReasons[resourceType] || `Resource type "${resourceType}" is not recoverable.`;
+            return formatError(new Error(reason));
+          }
+
+          // Call the recovery endpoint
+          const response = await client.post<{ message: string; resourceId: string; resourceType: string }>(
+            storeApiPath(storeId, `audit-logs/${input.logId}/recover`),
+            {}
+          );
+
+          return formatSuccess({
+            recovered: true,
+            message: response.message,
+            resourceId: response.resourceId,
+            resourceType: response.resourceType,
+          });
         } catch (error) {
           return formatError(error);
         }
